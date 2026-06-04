@@ -24,8 +24,10 @@ public class DataInitializer {
     private final ObjectMapper mapper = new ObjectMapper();
     private final HttpClient client = HttpClient.newHttpClient();
 
+//    method that collect data from 2 APIs and Merge them into Object (Station) by using "mergeData" method
     public List<Station> collectMergeSave() throws IOException, InterruptedException {
 
+//        Create request for first endpoint
         HttpRequest requestForStationInfo = HttpRequest.newBuilder()
                 .uri(URI.create("https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_vw/pl/station_information.json"))
                 .GET()
@@ -33,22 +35,27 @@ public class DataInitializer {
 
         HttpResponse<String> responseStationInfo = client.send(requestForStationInfo,HttpResponse.BodyHandlers.ofString());
 
+//        Using mapper create root for first request
         JsonNode rootStationInfo = mapper.readTree(responseStationInfo.body());
 
         //        get all station data []
         JsonNode stationsData = rootStationInfo.get("data").get("stations");
 
+//        Lists to hold Objects from both APIs
         List<StationInfo> stationInfoList = new ArrayList<>();
         List<StationStatus> stationStatusList = new ArrayList<>();
 
+//        Loop to get that many elements that we want from first API
         for (int i = 0; i < limit; i++) {
 
+//            Getting need info
             String stationId = stationsData.get(i).path("station_id").asString();
             String stationName = stationsData.get(i).path("name").asString();
             Double stationLat = stationsData.get(i).path("lat").asDouble(0.0);
             Double stationLon = stationsData.get(i).path("lon").asDouble(0.0);
             int stationCapacity = stationsData.get(i).path("capacity").asInt();
 
+//            Create Object from data
             StationInfo station = new StationInfo(
                     stationId,
                     stationName,
@@ -56,10 +63,12 @@ public class DataInitializer {
                     stationLon,
                     stationCapacity
             );
+//            saving object to our Array
             stationInfoList.add(station);
         }
 
 
+//        Create sec request
         HttpRequest requestForStationStatus = HttpRequest.newBuilder(URI.create("https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_vw/pl/station_status.json"))
                 .GET()
                 .build();
@@ -67,19 +76,22 @@ public class DataInitializer {
         HttpResponse<String> responseStationStatus = client.send(requestForStationStatus, HttpResponse.BodyHandlers.ofString());
 
 
-        JsonNode statusStationsData = mapper.readTree(responseStationStatus.body());
+//        create root for sec response
+        JsonNode rootStatusStationsData = mapper.readTree(responseStationStatus.body());
 
-        JsonNode statusRoot = statusStationsData.get("data").get("stations");
+        JsonNode statusRoot = rootStatusStationsData.get("data").get("stations");
 
+//        Loop to get that many elements that we want from  second API
         for (int i = 0; i < limit; i++) {
 
-
+//            Get needed information
             String statusStationId = statusRoot.get(i).path("station_id").asString();
             int numBikesAvailable = statusRoot.get(i).path("num_bikes_available").asInt();
             int numDocksAvailable = statusRoot.get(i).path("num_docks_available").asInt();
             boolean isRenting = statusRoot.get(i).path("is_renting").asBoolean();
             boolean isReturning = statusRoot.get(i).path("is_returning").asBoolean();
 
+//            Create Object from data we collect
             StationStatus stationStatus = new StationStatus(
                     statusStationId,
                     numBikesAvailable,
@@ -87,13 +99,14 @@ public class DataInitializer {
                     isRenting,
                     isReturning
             );
-
+//            Save Object from sec API to List
             stationStatusList.add(stationStatus);
         }
 
+//        Create List for merged Objects
         List<Station> mergedDataList = mergeData(stationInfoList,stationStatusList);
 
-        System.out.println(mergedDataList);
+//        Save to database our mergedDataList
         stationService.saveAll(mergedDataList);
 
         return mergedDataList;
@@ -101,10 +114,14 @@ public class DataInitializer {
 
     public static List<Station> mergeData(List<StationInfo> stations, List<StationStatus> stationStatusList){
 
+//        Create list for merged Object
         List<Station> mergedStations = new ArrayList<>();
 
-        for (int i = 0; i < stations.size(); i++) {
+        int numOfObject = stations.size();
+//        Loop through elements to create merged Objects
+        for (int i = 0; i < numOfObject; i++) {
 
+//            Create merged Object
             Station station = new Station(
                     null,
                     stations.get(i).getId(),
@@ -117,6 +134,8 @@ public class DataInitializer {
                     stationStatusList.get(i).isRenting(),
                     stationStatusList.get(i).isReturning()
             );
+
+//            Add them to List
             mergedStations.add(station);
 
         }
