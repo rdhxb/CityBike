@@ -1,7 +1,13 @@
 package com.rdhxb.CityBike;
 
+import com.rdhxb.CityBike.DataCollector.DataInitializer;
+import com.rdhxb.CityBike.bikeService.StationService;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+
+
 
 @SpringBootApplication
 public class CityBikeApplication {
@@ -10,4 +16,8 @@ public class CityBikeApplication {
 		SpringApplication.run(CityBikeApplication.class, args);
 	}
 
+	@Bean
+	CommandLineRunner InitData(DataInitializer dataInitializer){
+		return args -> dataInitializer.collectMergeSave();
+	}
 }
