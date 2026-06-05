@@ -43,5 +43,27 @@ public class StationService {
         stationRepo.deleteAll();
     }
 
+// method that will take incoming merged data and will add not existing and override existing Objects with new data
+    @Transactional
+    public void updateIncomingData(List<Station> stations){
+        for (Station s : stations){
+            String incomingStationId = s.getStationId();
+            if (stationRepo.findByStationId(incomingStationId) == null){
+                stationRepo.save(s);
+            }else{
+                Station updateStation = stationRepo.findByStationId(incomingStationId);
+                updateStation.setName(s.getName());
+                updateStation.setLon(s.getLon());
+                updateStation.setLat(s.getLat());
+                updateStation.setCapacity(s.getCapacity());
+                updateStation.setRenting(s.isRenting());
+                updateStation.setReturning(s.isReturning());
+                updateStation.setNumDocksAvailable(s.getNumDocksAvailable());
+                updateStation.setNumBikesAvailable(s.getNumBikesAvailable());
+            }
+
+        }
+    }
+
 
 }

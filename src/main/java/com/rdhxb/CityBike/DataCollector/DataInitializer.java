@@ -124,10 +124,8 @@ public class DataInitializer {
 
 //        Create List for merged Objects
         List<Station> mergedDataList = mergeData(stationInfoList, stationStatusList);
-//            delate all data before save not optimal but good enough in this case
-            stationService.deleteAll();
-//        Save to database our mergedDataList
-        stationService.saveAll(mergedDataList);
+
+        stationService.updateIncomingData(mergedDataList);
 
         return mergedDataList;
     }
