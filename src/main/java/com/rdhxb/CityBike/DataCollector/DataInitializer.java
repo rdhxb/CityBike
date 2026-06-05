@@ -3,6 +3,8 @@ package com.rdhxb.CityBike.DataCollector;
 import com.rdhxb.CityBike.bikeService.StationService;
 import com.rdhxb.CityBike.entity.Station;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -17,43 +19,42 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class DataInitializer {
 
     private final StationService stationService;
-    private final int limit = 10;
     private final ObjectMapper mapper = new ObjectMapper();
     private final HttpClient client = HttpClient.newHttpClient();
 
     //    method that collect data from 2 APIs and Merge them into Object (Station) by using "mergeData" method
-    public List<Station> collectMergeSave() throws IOException, InterruptedException {
+    @Scheduled(fixedRate = 60_000)
+    public void collectMergeSave() throws IOException, InterruptedException {
+        try {
+
 
 //        Create request for first endpoint
-        HttpRequest requestForStationInfo = HttpRequest.newBuilder()
-                .uri(URI.create("https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_vw/pl/station_information.json"))
-                .GET()
-                .build();
+            HttpRequest requestForStationInfo = HttpRequest.newBuilder()
+                    .uri(URI.create("https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_vw/pl/station_information.json"))
+                    .GET()
+                    .build();
 
-        HttpResponse<String> responseStationInfo = client.send(requestForStationInfo, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> responseStationInfo = client.send(requestForStationInfo, HttpResponse.BodyHandlers.ofString());
 
 //        Using mapper create root from first request
-        JsonNode rootStationInfo = mapper.readTree(responseStationInfo.body());
+            JsonNode rootStationInfo = mapper.readTree(responseStationInfo.body());
 
 //        get all station data []
-        JsonNode stationsData = rootStationInfo.get("data").get("stations");
+            JsonNode stationsData = rootStationInfo.get("data").get("stations");
 
 //        Lists to hold Objects from both APIs
-        List<StationInfo> stationInfoList = new ArrayList<>();
-        List<StationStatus> stationStatusList = new ArrayList<>();
+            List<StationInfo> stationInfoList = new ArrayList<>();
+            List<StationStatus> stationStatusList = new ArrayList<>();
 
-
-
-        //        Loop to get that many elements that we want from first API
-            for (int i = 0; i < limit; i++) {
-
-//                is limit valid in no save as many as possible
-                if (i < stationsData.size()) {
+            //        Loop to get that many elements that we want from first API
+            for (int i = 0; i < stationsData.size(); i++) {
 
 //            Getting need info
                     String stationId = stationsData.get(i).path("station_id").asString();
@@ -72,32 +73,25 @@ public class DataInitializer {
                     );
 //            saving object to our Array
                     stationInfoList.add(station);
-                }else {
-                    break;
                 }
-            }
-
 
 
 //        Create sec request
-        HttpRequest requestForStationStatus = HttpRequest.newBuilder(URI.create("https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_vw/pl/station_status.json"))
-                .GET()
-                .build();
+            HttpRequest requestForStationStatus = HttpRequest.newBuilder(URI.create("https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_vw/pl/station_status.json"))
+                    .GET()
+                    .build();
 
-        HttpResponse<String> responseStationStatus = client.send(requestForStationStatus, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> responseStationStatus = client.send(requestForStationStatus, HttpResponse.BodyHandlers.ofString());
 
 
 //        create root from sec response
-        JsonNode rootStatusStationsData = mapper.readTree(responseStationStatus.body());
+            JsonNode rootStatusStationsData = mapper.readTree(responseStationStatus.body());
 
-        JsonNode statusRoot = rootStatusStationsData.get("data").get("stations");
+            JsonNode statusRoot = rootStatusStationsData.get("data").get("stations");
 
 
 //        Loop to get that many elements that we want from  second API
-            for (int i = 0; i < limit; i++) {
-
-//                is limit valid in no save as many as possible
-                if (i < statusRoot.size()) {
+            for (int i = 0; i < statusRoot.size(); i++) {
 
 //            Get needed information
                     String statusStationId = statusRoot.get(i).path("station_id").asString();
@@ -116,18 +110,19 @@ public class DataInitializer {
                     );
 //            Save Object from sec API to List
                     stationStatusList.add(stationStatus);
-                }else{
-                    break;
                 }
-            }
 
 
 //        Create List for merged Objects
-        List<Station> mergedDataList = mergeData(stationInfoList, stationStatusList);
+            List<Station> mergedDataList = mergeData(stationInfoList, stationStatusList);
 
-        stationService.updateIncomingData(mergedDataList);
+//            Use updateIncomingData method to load new Data
+            stationService.updateIncomingData(mergedDataList);
+            log.info("Schedule refresh works add: " + mergedDataList.size() + " records to db");
+        } catch (Exception e) {
+            log.warn("Shedule refresh does not work skipping !");
+        }
 
-        return mergedDataList;
     }
 
     public static List<Station> mergeData(List<StationInfo> stations, List<StationStatus> stationStatusList) {
@@ -143,7 +138,6 @@ public class DataInitializer {
         for (StationStatus s : stationStatusList){
             stationStatusMap.put(s.getId(), s);
         }
-
 
         for (StationInfo info : stationInfoMap.values()) {
             StationStatus status = stationStatusMap.get(info.getId());

@@ -1,13 +1,11 @@
 package com.rdhxb.CityBike;
 
-import com.rdhxb.CityBike.DataCollector.DataInitializer;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 
-
+@EnableScheduling
 @SpringBootApplication
 public class CityBikeApplication {
 
@@ -15,8 +13,4 @@ public class CityBikeApplication {
 		SpringApplication.run(CityBikeApplication.class, args);
 	}
 
-	@Bean
-	CommandLineRunner InitData(DataInitializer dataInitializer){
-		return args -> dataInitializer.collectMergeSave();
-	}
 }
