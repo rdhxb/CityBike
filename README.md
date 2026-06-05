@@ -186,4 +186,4 @@ Base URL: `http://localhost:8080/api/stations`
 
 ## License
 
-Not specified — add a license file if you plan to publish this.
+MIT
