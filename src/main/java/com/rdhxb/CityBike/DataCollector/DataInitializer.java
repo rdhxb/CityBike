@@ -118,7 +118,7 @@ public class DataInitializer {
 
 //            Use updateIncomingData method to load new Data
             stationService.updateIncomingData(mergedDataList);
-            log.info("Schedule refresh works add: " + mergedDataList.size() + " records to db");
+            log.info("Schedule refresh works !");
         } catch (Exception e) {
             log.warn("Shedule refresh does not work skipping !");
         }

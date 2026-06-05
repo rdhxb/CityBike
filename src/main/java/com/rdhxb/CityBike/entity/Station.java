@@ -1,5 +1,6 @@
 package com.rdhxb.CityBike.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,7 +23,9 @@ public class Station {
 
     private int numBikesAvailable;
     private int numDocksAvailable;
+    @JsonProperty("isRenting")
     private boolean isRenting;
+    @JsonProperty("isReturning")
     private boolean isReturning;
 
 }
