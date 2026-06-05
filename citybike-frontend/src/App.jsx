@@ -18,7 +18,7 @@ export default function App() {
       <header className="topbar">
         <div className="topbar-brand">
           <span className="topbar-mark">●</span>
-          <span className="topbar-name">VETURILO</span>
+          <span className="topbar-name">CityBike</span>
           <span className="topbar-subtitle">mapa stacji · Warszawa</span>
         </div>
 
