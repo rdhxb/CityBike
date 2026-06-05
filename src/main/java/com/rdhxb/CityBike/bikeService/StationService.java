@@ -24,11 +24,11 @@ public class StationService {
     }
 
     public List<Station> getWithDocksAvailable(){
-        return stationRepo.findAllByNumBikesAvailableGreaterThan(0);
+        return stationRepo.findAllByNumDocksAvailableGreaterThan(0);
     }
 
     public List<Station> getWithBikesAvailable(){
-        return stationRepo.findAllByNumDocksAvailableGreaterThan(0);
+        return stationRepo.findAllByNumBikesAvailableGreaterThan(0);
     }
 
 
@@ -36,6 +36,11 @@ public class StationService {
     @Transactional
     public void saveAll(List<Station> stations){
         stationRepo.saveAll(stations);
+    }
+
+    @Transactional
+    public void deleteAll(){
+        stationRepo.deleteAll();
     }
 
 

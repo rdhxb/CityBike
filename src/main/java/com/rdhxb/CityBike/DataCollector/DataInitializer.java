@@ -13,7 +13,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -122,7 +124,8 @@ public class DataInitializer {
 
 //        Create List for merged Objects
         List<Station> mergedDataList = mergeData(stationInfoList, stationStatusList);
-
+//            delate all data before save not optimal but good enough in this case
+            stationService.deleteAll();
 //        Save to database our mergedDataList
         stationService.saveAll(mergedDataList);
 
@@ -133,28 +136,34 @@ public class DataInitializer {
 
 //        Create list for merged Object
         List<Station> mergedStations = new ArrayList<>();
+        Map<String, StationInfo> stationInfoMap = new HashMap<>();
+        Map<String, StationStatus> stationStatusMap = new HashMap<>();
 
-        int numOfObject = stations.size();
-//        Loop through elements to create merged Objects
-        for (int i = 0; i < numOfObject; i++) {
+        for (StationInfo s : stations){
+            stationInfoMap.put(s.getId(),s);
+        }
+        for (StationStatus s : stationStatusList){
+            stationStatusMap.put(s.getId(), s);
+        }
 
-//            Create merged Object
-            Station station = new Station(
+
+        for (StationInfo info : stationInfoMap.values()) {
+            StationStatus status = stationStatusMap.get(info.getId());
+            if (status == null) {
+                continue;
+            }
+            mergedStations.add(new Station(
                     null,
-                    stations.get(i).getId(),
-                    stations.get(i).getName(),
-                    stations.get(i).getLat(),
-                    stations.get(i).getLon(),
-                    stations.get(i).getCapacity(),
-                    stationStatusList.get(i).getNumBikesAvailable(),
-                    stationStatusList.get(i).getNumDocksAvailable(),
-                    stationStatusList.get(i).isRenting(),
-                    stationStatusList.get(i).isReturning()
-            );
-
-//            Add them to List
-            mergedStations.add(station);
-
+                    info.getId(),
+                    info.getName(),
+                    info.getLat(),
+                    info.getLon(),
+                    info.getCapacity(),
+                    status.getNumBikesAvailable(),
+                    status.getNumDocksAvailable(),
+                    status.isRenting(),
+                    status.isReturning()
+            ));
         }
         return mergedStations;
 

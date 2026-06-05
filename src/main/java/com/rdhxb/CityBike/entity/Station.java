@@ -13,6 +13,7 @@ public class Station {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true, nullable = false)
     private String stationId;
     private String name;
     private Double lat;
